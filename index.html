@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Preventing XSS with Content Security Policy</title>
+  <title>Next-Gen Tools for Securing your Front-end Code</title>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="chrome=1">
   <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">-->
@@ -34,11 +34,32 @@
     </hgroup>
     <article>
       <ul class="build">
-        <li>Software engineer at Disqus
+        <li>Software engineer at Shape Security
+        <li>Formerly: Disqus, FreshBooks
         <li>Co-author, <a href="http://manning.com/vinegar">Third-party JavaScript</a> (Manning)
         <li>Once ate 7 McDonald's cheeseburgers in one sitting
-        <li>Implemented Content Security Policy in Disqus
       </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>The rough plan</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li>Cross-site scripting (XSS) today
+          <ul>
+            <li>How it occurs
+            <li>Why it's a big deal
+            <li>Traditional mitigation, e.g. sanitization
+          </ul>
+        </li>
+        <li>The modern arsenal
+          <ul>
+            <li>Static analysis tools (ESLint)
+            <li>Iframe sandbox + seamless
+            <li>Content-security policy (CSP)
     </article>
   </slide>
 
@@ -80,7 +101,7 @@ document.body.appendChild(div);</pre>
       <pre class="prettyprint" data-lang="json">
 {
   "id": 1337,
-  "username": "some_asshole87"  
+  "username": "some_asshole87"
   "name": "&lt;img src=\"\" onerror=\"alert('pwned')\"&gt;",
 }</pre>
       <pre class="prettyprint" data-lang="html">
@@ -142,7 +163,7 @@ function escapeHtml(str) {
         .replace(/&gt;/g, &quot;&amp;gt;&quot;)
         .replace(/&quot;/g, &quot;&amp;quot;&quot;)
         .replace(/&#039;/g, &quot;&amp;#039;&quot;)
-        .replace(/\//g, &quot;&amp;#x2F;&quot;)  
+        .replace(/\//g, &quot;&amp;#x2F;&quot;)
 }</pre>
       <p>Character substitutions <a href="https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet#XSS_Prevention_Rules_Summary">recommended by OWASP</a></p>
     </article>
@@ -161,7 +182,7 @@ document.body.appendChild(div);</pre>
       <pre class="prettyprint" data-lang="json">
 {
   "id": 1337,
-  "username": "some_asshole87"  
+  "username": "some_asshole87"
   "name": "&lt;img src=\"\" onerror=\"alert('pwned')\"&gt;",
 }</pre>
       <pre class="prettyprint" data-lang="html">
@@ -197,16 +218,19 @@ Welcome &amp;lt;img src=&amp;quot;&amp;quot; onerror=&amp;quot;alert(&amp;#039;p
     </hgroup>
     <article>
       <ul>
-        <li>Yahoo Mail (<a href="http://thenextweb.com/insider/2013/01/31/yahoo-mail-users-still-seeing-accounts-hacked-via-xss-exploit-amid-reports-yahoo-failed-to-fix-old-flaw/">2013</a>)
+        <li>Twitter/TweetDeck (<a href="http://www.theguardian.com/technology/2014/jun/11/twitter-tweetdeck-xss-flaw-users-vulnerable">2014</a>)
+        <li>eBay (<a href="http://www.pcworld.com/article/2241305/latest-ebay-flaw-is-a-rookie-mistake-for-a-website.html">2014</a>)
+        <li>Cisco (<a href="http://threatpost.com/cisco-patches-xss-flaw-in-security-appliances">2014</a>)
+        <li>Yahoo (<a href="http://www.scmagazine.com/most-yahoo-sites-impacted-by-xss-flaw-in-comments-section/article/347606/">2014</a>, <a href="http://thenextweb.com/insider/2013/01/31/yahoo-mail-users-still-seeing-accounts-hacked-via-xss-exploit-amid-reports-yahoo-failed-to-fix-old-flaw/">2013</a>)
         <li>Mega.com (<a href="http://www.cloudave.com/25435/kim-dot-coms-new-mega-site-has-xss-security-holes/">2013</a>)
+        <li>Microsoft (<a href="http://www.rafayhackingarticles.net/2013/03/dom-based-xss-in-microsoft.html">2013</a>)
         <li>Facebook (<a href="http://blog.detectify.com/post/39209711597/how-i-got-a-3-500-usd-facebook-bug-bounty">2012</a>, <a href="http://theharmonyguy.com/oldsite/2011/04/21/recent-facebook-xss-attacks-show-increasing-sophistication/">2011</a>, <a href="http://www.acunetix.com/websitesecurity/xss-facebook/">2010</a>)
         <li>Dropbox (<a href="http://blog.detectify.com/post/39209711597/how-i-got-a-3-500-usd-facebook-bug-bounty">2012</a>)
         <li>Google +1 button (<a href="http://blog.mindedsecurity.com/2012/11/dom-xss-on-google-plus-one-button.html">2012</a>)
-        <li>microsoft.com (<a href="http://www.rafayhackingarticles.net/2013/03/dom-based-xss-in-microsoft.html">2013</a>)
         <li>Yelp (<a href="http://techcrunch.com/2010/05/11/another-security-hole-found-on-yelp-facebook-data-once-again-put-at-risk/">2010</a>)
       </ul>
 
-      <p style="margin-top:2em">These are publicized exploits. There are likely far more kept private.</p>
+      <p style="margin-top:2em">These are publicized exploits. Far more are unpublicized.</p>
     </article>
   </slide>
 
@@ -220,9 +244,88 @@ Welcome &amp;lt;img src=&amp;quot;&amp;quot; onerror=&amp;quot;alert(&amp;#039;p
 
   <slide class="segue dark nobackground">
     <hgroup class="auto-fadein">
-      <h2>Content Security Policy (CSP)</h2>
-      <h3>Light at the end of the tunnel</h3>
+      <h2>The Modern Arsenal</h2>
+      <h3>Tools to help mitigate XSS vulnerabilities</h3>
     </hgroup>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Static analysis tools
+    </hgroup>
+    <article>
+
+      <p>Tools that analyze your source code to find defects and/or enforce style.</p>
+      <p style="text-align:center">
+        <img src="images/jshint-screenshot.png"/>
+      </p>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Static analysis tools and XSS</h2>
+    </hgroup>
+
+    <article>
+      <ul class="build">
+        <li>If static analysis tools can find common JS defects ...
+        <li>Can they also discover and prevent common XSS vulnerabilities?
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>An XSS pattern: textNode + innerHTML</h2>
+    </hgroup>
+    <article>
+      <p>An alternate <code>escapeHtml</code> implementation ... with a flaw.
+<pre class="prettyprint" data-lang="javascript">function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+};</pre>
+<pre class="prettyprint" data-lang="javascript">var username = '&lt;img src="herp:/" onerror=alert("derp")&gt;';
+var profileLink = '&lt;a href="/profile"&gt;' + escapeHtml(username) + '&lt;/a&gt;';
+var div = document.getElementById('target');
+div.innerHTML = profileLink;</pre>
+<pre class="prettyprint" data-lang="html">
+ &lt;a href="/profile"&gt;&lt;img src="herp:/" onerror=alert("derp")&gt;&lt;/a&gt;
+</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>ESLint</h2>
+    </hgroup>
+    <article>
+      <ul>
+        <li>Latest generation of JavaScript linters (released 2013)
+        <li>Uses Mozilla's SpiderMonkey Parser API internally
+        <li>Rules are highly configurable
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Detecting XSS patterns w/ ESLint</h2>
+    </hgroup>
+    <article>
+      <p>TODO
+    </article>
+  </slide>
+
+  <slide class="nobackground">
+    <article class="flexbox vleft">
+      <h2>Sandboxed iframes</h2>
+    </article>
+  </slide>
+
+  <slide class="nobackground">
+    <article class="flexbox vleft">
+      <h2>Content-Security Policy</h2>
+    </article>
   </slide>
 
   <slide>

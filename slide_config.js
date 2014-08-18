@@ -1,7 +1,7 @@
 var SLIDE_CONFIG = {
   // Slide settings
   settings: {
-    title: 'Preventing XSS with Content Security Policy',
+    title: 'Next-Gen Tools for Securing your Front-end Code',
     subtitle: '',
     useBuilds: true, // Default: true. False will turn off slide animation builds.
     usePrettify: true, // Default: true
@@ -19,7 +19,7 @@ var SLIDE_CONFIG = {
   // Author information
   presenters: [{
     name: 'Ben Vinegar',
-    company: 'Software Engineer, Disqus',
+    company: 'Software Engineer, Shape Security',
     gplus: '',
     twitter: '@bentlegen',
     www: 'http://benv.ca'
