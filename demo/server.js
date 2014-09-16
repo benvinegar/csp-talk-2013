@@ -27,7 +27,8 @@ http.createServer(function(request, response) {
         return;
       }
 
-      response.setHeader('Content-Security-Policy', "script-src 'self' ajax.googleapis.com");
+      if (/csp/.test(request.url))
+        response.setHeader('Content-Security-Policy', "script-src 'self' ajax.googleapis.com");
 
       response.writeHead(200);
       response.write(file, "binary");
