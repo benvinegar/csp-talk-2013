@@ -12,13 +12,17 @@
 	</style>
 </head>
 <body>
-	<iframe src="iframe.html" sandbox="allow-same-origin"></iframe>
 
 	<script>
-	var iframe = document.getElementsByTagName('iframe')[0];
-	var doc = iframe.contentWindow.document;
+	var iframe = document.createElement('iframe');
+	iframe.src = 'sandbox/empty.html';
+	iframe.sandbox = 'allow-same-origin';
+	document.body.appendChild(iframe);
 
-	doc.write('<h1>Nothing to see here!</h1><img src="" onerror="alert()"/>');
+	var userName = 'Ben <img src="" onerror="alert()"/>';
+	var iframeDoc = iframe.contentWindow.document;
+
+	iframeDoc.write(userName);
 	</script>
 </body>
 </html>

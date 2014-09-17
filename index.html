@@ -55,7 +55,7 @@
             <li>Traditional mitigation, e.g. sanitization
           </ul>
         </li>
-        <li>The modern arsenal
+        <li>Next-gen tools
           <ul>
             <li>Static analysis tools (ESLint)
             <li>Iframe sandbox + seamless
@@ -244,33 +244,40 @@ Welcome &amp;lt;img src=&amp;quot;&amp;quot; onerror=&amp;quot;alert(&amp;#039;p
 
   <slide class="segue dark nobackground">
     <hgroup class="auto-fadein">
-      <h2>The Next-Gen Arsenal</h2>
+      <h2>Some New Ideas</h2>
       <h3>Existing and future tools to help mitigate XSS vulnerabilities</h3>
     </hgroup>
   </slide>
 
-  <slide>
-    <hgroup>
-      <h2>Static analysis tools
-    </hgroup>
-    <article>
-
-      <p>Tools that analyze your source code to find defects and/or enforce style.</p>
-      <p style="text-align:center">
-        <img src="images/jshint-screenshot.png"/>
-      </p>
+  <slide class="nobackground">
+    <article class="flexbox vleft">
+      <h2>Static Analysis</h2>
     </article>
   </slide>
 
   <slide>
     <hgroup>
-      <h2>Static analysis tools and XSS</h2>
+      <h2>Static Analysis Tools</h2>
     </hgroup>
-
     <article>
-      <ul class="build">
-        <li>If static analysis tools can find common JS defects ...
-        <li>Can they also discover and prevent common XSS vulnerabilities?
+      <p>Analyze your source code to derive insights.
+
+      <ul>
+        <li>Code complexity analysis
+        <li>Detecting syntax errors
+        <li>Enforcing style guidelines
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup>
+      <h2>Linters</h2>
+    </hgroup>
+    <article>
+      <p>Tools that analyze your source code to find defects and/or enforce style.</p>
+      <p style="text-align:center">
+        <img src="images/jshint-screenshot.png"/>
+      </p>
     </article>
   </slide>
 
@@ -322,6 +329,81 @@ div.innerHTML = profileLink;</pre>
     </article>
   </slide>
 
+  <slide>
+    <hgroup><h2>"sandbox" iframe attribute</h2></hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="html">
+&lt;iframe src="index.html" <b>sandbox</b>/&gt;&lt;/iframe&gt;</pre>
+      <ul>
+        <li>Restricts iframe contents from ...
+          <ul>
+            <li>Opening pop-ups
+            <li>Navigating the browser
+            <li>Embedding forms
+            <li>Capturing the mouse pointer (Pointer Lock API)
+            <li><b>Executing JavaScript</b>
+          </ul>
+        </li>
+        <li>Intended for 3rd-party widgets</li>
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup><h2>Using sandbox to mitigate XSS</h2></hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="javascript">
+var iframe = document.createElement('iframe');
+iframe.src = 'empty.html';
+iframe.sandbox = 'allow-same-origin';
+document.body.appendChild(iframe);
+
+var userName = 'Ben &lt;img src="" onerror="alert()"/&gt;';
+var iframeDoc = iframe.contentWindow.document;
+
+iframeDoc.write(userName);</pre>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup><h2>How useful is this?</h2></hgroup>
+    <article>
+      <ul class="build">
+        <li>Still manual, error prone; must always use sandbox
+        <li>Iframe element creation is slow
+        <li>Iframes are inflexible
+        <ul>
+          <li>Don't resize to fit contents
+          <li>Don't inherit styles
+          <li>Links navigate iframe, not parent
+        </ul>
+      </ul>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup><h2>"seamless" iframe attribute</h2></hgroup>
+    <article>
+      <pre class="prettyprint" data-lang="html">
+&lt;iframe src="index.html" <b>seamless</b> sandbox/&gt;&lt;/iframe&gt;</pre>
+      <ul>
+        <li>Resizes to fit contents
+        <li>Inherits parent document styles
+        <li>Links navigate parent document
+        <li>HTML5, fully specified
+        <li><span style="text-decoration:line-through">Demo</span>
+    </article>
+  </slide>
+
+  <slide>
+    <hgroup><h2>seamless browser support</h2></hgroup>
+    <article>
+      <p style="text-align:center">
+        <img src="images/seamless-support.png" style="width:100%"/>
+      </p>
+    </article>
+  </slide>
+
   <slide class="nobackground">
     <article class="flexbox vleft">
       <h2>Content-Security Policy</h2>
@@ -334,7 +416,7 @@ div.innerHTML = profileLink;</pre>
     </hgroup>
     <article>
       <ul class="build">
-        <li>New browser feature for mitigiating XSS and data-injection attacks
+        <li>New browser feature for mitigating XSS attacks
         <li>1.0 W3C Candidate Recomendation (1.1 underway)
         <li>Whitelists "safe" script hosts
         <li><code>Content-Security-Policy</code> HTTP header
@@ -349,7 +431,7 @@ div.innerHTML = profileLink;</pre>
     <article>
       <p>Example: restrict scripts to current origin and ajax.googleapis.com</p>
       <pre class="prettyprint" data-lang="http">
-Content-Security-Policy: script-src 'self' ajax.googleapis.com</pre>
+<b>Content-Security-Policy</b>: script-src 'self' ajax.googleapis.com</pre>
       <pre class="prettyprint" data-lang="html">
 &lt;script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"&gt;&lt;/script&gt;
 &lt;script src="/js/app.js"&gt;&lt;/script&gt;
@@ -455,53 +537,12 @@ Content-Security-Policy: script-src 'self' <b>'unsafe-eval'</b> ajax.googleapis.
 
   <slide>
     <hgroup>
-      <h2>Multiple CSP arguments</h2>
-    </hgroup>
-    <article>
-      <pre class="prettyprint" data-lang="http">
-Content-Security-Policy: default-src 'self';
- script-src 'self' 'unsafe-eval' ajax.googleapis.com google-analytics.com;
- style-src 'self' ajax.googleapis.com;
- connect-src 'self' https://api.myapp.com realtime.myapp.com:8080;
- media-src 'self' youtube.com;
- object-src 'self' youtube.com;
- frame-src 'self' youtube.com embed.ly</pre>
-    </article>
-  </slide>
-  <slide>
-    <hgroup>
       <h2>Browser support</h2>
     </hgroup>
     <article>
-      <p><code>Content-Security-Policy</code></p>
-      <ul>
-        <li>Chrome 26+
-      </ul>
-      <p style="margin-top:2em"><code>X-WebKit-CSP</code></p>
-      <ul>
-        <li>Safari 5.1+
-        <li>Chrome 14 – 25
-      </ul>
-      <p style="margin-top:2em"><code>X-Content-Security-Policy</code></p>
-      <ul>
-        <li>Firefox 4+
-        <li>Internet Explorer 10*
-    </article>
-  </slide>
-
-  <slide>
-    <hgroup>
-      <h2>Implementations not created equal</h2>
-    </hgroup>
-    <article>
-      <p>Vendor-prefixed CSP implementations all vary
-      <ul class="build">
-        <li>Firefox CSP implementation incompatible with W3C spec
-        <li>IE10 only implements sandbox directive
-        <li>Safari 5.1's CSP implementation differs from Safari 6's
-        <li>Android browser recognizes <code>X-WebKit-CSP</code>, but breaks on it
-        <li>Suggestion: avoid prefixed implementations
-      </ul>
+      <p style="text-align:center">
+        <img src="images/csp-support.png" style="width:100%"/>
+      </p>
     </article>
   </slide>
 
@@ -512,7 +553,7 @@ Content-Security-Policy: default-src 'self';
 
     <article>
       <ul>
-        <li>Limited browser support – can't depend on CSP to protect your app</p>
+        <li>Incomplete browser support – can't depend on CSP to protect your app</p>
         <li>But implementing CSP still has tremendous value &hellip;
       </ul>
     </article>
@@ -538,7 +579,8 @@ Content-Security-Policy: default-src 'self';
     <article>
       <p>Configure an endpoint to report violations
       <pre class="prettyprint" data-lang="http">
-Content-Security-Policy: default-src 'self'; <b>report-uri http://mysite.com/report.php</b></pre>
+Content-Security-Policy: default-src 'self';
+  <b>report-uri http://mysite.com/report.php</b></pre>
 
       <p style="margin-top:2em">CSP reports are delivered as JSON via HTTP POST
       <pre class="prettyprint" data-lang="json">
@@ -565,60 +607,8 @@ Content-Security-Policy: default-src 'self'; <b>report-uri http://mysite.com/rep
         <li>Lets you try CSP risk-free</li>
       </ul>
       <pre class="prettyprint" data-lang="http">
-<b>Content-Security-Policy-Report-Only</b>: default-src 'self'; report-uri http://mysite.com/report.php</pre>
-    </article>
-  </slide>
-
-  <slide>
-    <hgroup>
-      <h2>CSP violation events (1.1)</h2>
-    </hgroup>
-    <article>
-      <pre class="prettyprint" data-lang="javascript">
-document.onsecuritypolicyviolation = function (evt) {
-  console.log('Bzzp! Security violation on', evt.documentURI);
-  console.log('Violated directive:', evt.violatedDirective);
-  console.log('Original policy:', evt.originalPolicy);
-};</pre>
-      <ul style="margin-top:2em">
-        <li>Chrome Canary (28) w/ Experimental WebKit features flag enabled
-        <li>Warning: specification is changing
-      </ul>
-    </article>
-  </slide>
-
-  <slide>
-    <hgroup>
-      <h2>CSP report logging services</h2>
-    </hgroup>
-    <article>
-      <p>&hellip; don't exist yet</p>
-      <ul class="build">
-        <li>Sentry <a href="https://github.com/getsentry/sentry/issues/729">open issue</a>
-        <li>Errorception, Airbrake – nothing happening
-        <li>Contact your exception logging service provider today!
-        <li>Violation events open door to JS exception logging
-      </ul>
-    </article>
-  </slide>
-
-  <slide>
-    <hgroup>
-      <h2>CSP resources</h2>
-    </hgroup>
-    <article>
-      <ul>
-        <li><a href="http://www.html5rocks.com/en/tutorials/security/content-security-policy/">An Introduction to Content Security Policy</a> – HTML5Rocks
-        <li><a href="http://www.w3.org/TR/CSP/">Content Security Policy 1.0</a> – W3C
-        <li><a href="http://www.w3.org/TR/CSP/">Content Security Policy 1.1</a> – W3C
-      </ul>
-
-      <p style="margin-top:2em">Spec authors on Twitter</p>
-      <ul>
-        <li>Adam Barth (<a href="https://twitter.com/adambarth">@adambarth</a>), Google
-        <li>Dan Veditz (<a href="https://twitter.com/dveditz">@dveditz</a>), Mozilla
-        <li>Mike West (<a href="https://twitter.com/mikewest">@mikewest</a>), Google
-      </ul>
+<b>Content-Security-Policy-Report-Only</b>: default-src 'self';
+  report-uri http://mysite.com/report.php</pre>
     </article>
   </slide>
 
